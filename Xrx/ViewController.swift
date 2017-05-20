@@ -14,7 +14,7 @@ class ViewController: NSViewController, NSTableViewDataSource, NSTableViewDelega
     
     private let pasteboard = NSPasteboard.general()
     private var timer: Timer?
-    private var copiedStrings: Set<String> = []
+    private var copiedStrings = BufferContent()
     
     fileprivate enum CellIdentifiers {
         static let BufferContentID = "BufferContentID"
@@ -38,12 +38,11 @@ class ViewController: NSViewController, NSTableViewDataSource, NSTableViewDelega
     }
     
     func numberOfRows(in tableView: NSTableView) -> Int {
-        return copiedStrings.count
+        return copiedStrings.count()
     }
     
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        let arrayView = Array<String>(copiedStrings).reversed() as [String]
-        let content = arrayView[row]
+        let content = copiedStrings.getAt(position: row)
         if tableColumn == tableView.tableColumns[0] {
             guard let cell = tableView.make(withIdentifier: CellIdentifiers.BufferContentID, owner: nil) as? NSTableCellView else {
                 return nil
@@ -57,22 +56,20 @@ class ViewController: NSViewController, NSTableViewDataSource, NSTableViewDelega
     
     func checkPasteBoard() {
         if let stringInBuffer = pasteboard.string(forType: NSPasteboardTypeString) {
-            let sizeBefore = copiedStrings.count
-            copiedStrings.insert(stringInBuffer);
-            if sizeBefore != copiedStrings.count {
+            let sizeBefore = copiedStrings.count()
+            copiedStrings.insert(aString: stringInBuffer)
+            if sizeBefore != copiedStrings.count() {
                 print("Adding string ", stringInBuffer)
                 tableView.reloadData()
             }
-            
         }
     }
     
     func tableViewDblClick(_ sender:AnyObject){
-        let arrayView = Array<String>(copiedStrings)
         guard tableView.selectedRow >= 0 else {
             return
         }
-        let content = arrayView[tableView.selectedRow]
+        let content = copiedStrings.getAt(position: tableView.selectedRow)
         
         print("Copying to paste buffer ", content)
         pasteboard.clearContents()
